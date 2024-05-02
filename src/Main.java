@@ -1,6 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -8,7 +6,12 @@ public class Main {
     public static void main(String[] args) {
         List<Voter> voters = readVotersFromFile("input.csv");
         Map<Integer, Integer> scores = calculateScores(voters);
-        List<Integer> result = condorcetOrder(scores);
+        List<List<Integer>> result = condorcetOrder(scores);
+        writeResultToFile(result, "result.txt");
+        System.out.println("Voting Results:");
+        for (Map.Entry<Integer, Integer> entry : scores.entrySet()) {
+            System.out.println("Option " + entry.getKey() + ": " + entry.getValue() + " votes");
+        }
         System.out.println("Condorcet Order: " + result);
     }
 
@@ -42,20 +45,39 @@ public class Main {
         return scores;
     }
 
-    private static List<Integer> condorcetOrder(Map<Integer, Integer> scores) {
-        List<Map.Entry<Integer, Integer>> list = new ArrayList<>(scores.entrySet());
-        list.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
-
-        List<Integer> result = new ArrayList<>();
-        int maxScore = list.get(0).getValue();
-        for (Map.Entry<Integer, Integer> entry : list) {
-            if (entry.getValue() == maxScore) {
-                result.add(entry.getKey());
-            } else {
-                break;
-            }
+    private static List<List<Integer>> condorcetOrder(Map<Integer, Integer> scores) {
+        Map<Integer, List<Integer>> scoreGroups = new HashMap<>();
+        for (Map.Entry<Integer, Integer> entry : scores.entrySet()) {
+            int score = entry.getValue();
+            scoreGroups.computeIfAbsent(score, k -> new ArrayList<>()).add(entry.getKey());
         }
+
+        List<List<Integer>> result = new ArrayList<>(scoreGroups.values());
+        result.sort((group1, group2) -> Integer.compare(scores.get(group2.get(0)), scores.get(group1.get(0))));
         return result;
     }
-}
 
+    private static void writeResultToFile(List<List<Integer>> result, String fileName) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            for (List<Integer> group : result) {
+                if (result.indexOf(group) > 0) {
+                    writer.write(",");
+                }
+                if (group.size() == 1) {
+                    writer.write(String.valueOf(group.get(0)));
+                } else {
+                    writer.write("[");
+                    for (int i = 0; i < group.size(); i++) {
+                        if (i > 0) {
+                            writer.write(",");
+                        }
+                        writer.write(String.valueOf(group.get(i)));
+                    }
+                    writer.write("]");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
