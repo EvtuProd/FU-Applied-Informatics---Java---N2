@@ -1,13 +1,13 @@
 import java.util.List;
 
 public class Voter {
-    private List<String> preferences;
+    private List<Integer> preferences;
 
-    public Voter(List<String> preferences) {
+    public Voter(List<Integer> preferences) {
         this.preferences = preferences;
     }
 
-    public List<String> getPreferences() {
+    public List<Integer> getPreferences() {
         return preferences;
     }
 }
